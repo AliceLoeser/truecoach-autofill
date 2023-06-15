@@ -40,64 +40,49 @@ function addButtonToHeader(header) {
 }
 
 async function fillResultFromSearchResults(
-  child = 0,
   workoutVolumeTitle,
-  closeModalButton,
   textareaForResults,
   exerciseTitle
 ) {
-  console.log(child);
   await waitForElm(`.card.searchResults-workout`);
   const searchResultsAll = document.querySelectorAll(
     ".card.searchResults-workout"
   );
-  const searchResults = searchResultsAll[child];
 
-  const searchResultsFiltered = document.evaluate(
-    `.//h4[contains(., '${workoutVolumeTitle}')]`,
-    searchResults,
-    null,
-    XPathResult.FIRST_ORDERED_NODE_TYPE,
-    null
-  ).singleNodeValue?.parentNode;
+  for (const searchResults of searchResultsAll) {
+    const searchResultsFiltered = document.evaluate(
+      `.//h4[contains(., '${workoutVolumeTitle}')]`,
+      searchResults,
+      null,
+      XPathResult.FIRST_ORDERED_NODE_TYPE,
+      null
+    ).singleNodeValue?.parentNode;
 
-  if (searchResultsFiltered == null) {
-    closeModalButton.click();
-    return;
-  }
+    if (searchResultsFiltered == null) {
+      continue;
+    }
 
-  const spanMatchingSearchQuery = document.evaluate(
-    `.//span[text()='${exerciseTitle}']`,
-    searchResultsFiltered,
-    null,
-    XPathResult.FIRST_ORDERED_NODE_TYPE,
-    null
-  ).singleNodeValue;
+    const spanMatchingSearchQuery = document.evaluate(
+      `.//span[text()='${exerciseTitle}']`,
+      searchResultsFiltered,
+      null,
+      XPathResult.FIRST_ORDERED_NODE_TYPE,
+      null
+    ).singleNodeValue;
 
-  if (spanMatchingSearchQuery == null) {
-    closeModalButton.click();
+    if (spanMatchingSearchQuery == null) {
+      continue;
+    }
 
-    return;
-  }
+    const resultsText = spanMatchingSearchQuery.parentNode
+      .querySelector("p.exercise-info")
+      .textContent.trim();
 
-  const resultsText = spanMatchingSearchQuery.parentNode
-    .querySelector("p.exercise-info")
-    .textContent.trim();
-
-  if (resultsText !== NO_RESULTS_ADDED) {
-    textareaForResults.value = resultsText;
-    textareaForResults.style.height = "200px";
-    return true;
-  }
-
-  if (child + 1 < searchResultsAll.length) {
-    await fillResultFromSearchResults(
-      child + 1,
-      workoutVolumeTitle,
-      closeModalButton,
-      textareaForResults,
-      exerciseTitle
-    );
+    if (resultsText !== NO_RESULTS_ADDED) {
+      textareaForResults.value = resultsText;
+      textareaForResults.style.height = "200px";
+      return true;
+    }
   }
 
   return false;
@@ -119,9 +104,7 @@ async function fillExerciseResults(exerciseSection, workoutVolumeTitle) {
     );
 
     await fillResultFromSearchResults(
-      0,
       workoutVolumeTitle,
-      closeModalButton,
       textareaForResults,
       exerciseTitle
     );
